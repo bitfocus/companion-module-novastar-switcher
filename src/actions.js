@@ -9,6 +9,8 @@ export const getToken = async (url, obj) => {
 		json: obj,
 	})
 	const resData = JSON.parse(res.body)
+	instance.log('info', 'token:')
+	instance.log('info', res.body)
 	return resData
 }
 
@@ -25,10 +27,10 @@ export const getActions = function (instance) {
 		options: [],
 		callback: async (event) => {
 			try {
-				console.log(JSON.stringify(loginObj), instance.config.baseURL)
+				instance.log('info','take action:')
+				instance.log('info',instance.config.baseURL)
 				const res = await getToken(instance.config.baseURL, loginObj)
 				const token = res.code === 0 ? res.data.token : ''
-				console.log(token)
 				const obj = {
 					direction: 0,
 					effectSelect: 0,
@@ -56,7 +58,9 @@ export const getActions = function (instance) {
 		name: 'CUT',
 		options: [],
 		callback: async (event) => {
-			try {
+			try {				
+				instance.log('info','cut action:')
+				instance.log('info',instance.config.baseURL)
 				const res = await getToken(instance.config.baseURL, loginObj)
 				const token = res.code === 0 ? res.data.token : ''
 				const obj = {
@@ -90,6 +94,8 @@ export const getActions = function (instance) {
 		],
 		callback: async (event) => {
 			try {
+				instance.log('info','ftb action:')
+				instance.log('info',instance.config.baseURL)
 				const res = await getToken(instance.config.baseURL, loginObj)
 				const token = res.code === 0 ? res.data.token : ''
 				const obj = {
@@ -126,6 +132,8 @@ export const getActions = function (instance) {
 		],
 		callback: async (event) => {
 			try {
+				instance.log('info','freeze action:')
+				instance.log('info',instance.config.baseURL)
 				const res = await getToken(instance.config.baseURL, loginObj)
 				const token = res.code === 0 ? res.data.token : ''
 				const obj = {
@@ -166,6 +174,8 @@ export const getActions = function (instance) {
 		],
 		callback: async (event) => {
 			try {
+				instance.log('info','preset action:')
+				instance.log('info',instance.config.baseURL)
 				const res = await getToken(instance.config.baseURL, loginObj)
 				const token = res.code === 0 ? res.data.token : ''
 				const obj = {

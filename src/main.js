@@ -127,14 +127,14 @@ class NovaStarInstance extends InstanceBase {
 	}
 
 	async configUpdated(config) {
+		this.log('info', 'configUpdated module....')
+		
 		this.config = config
 		await this.getProtocol()
-
-		this.log('info', 'configUpdated module....')
 	}
 
 	init(config) {
-		this.log('debug', 'init module config....')
+		this.log('info', 'init module config....')
 
 		this.config = Object.assign({}, config)
 

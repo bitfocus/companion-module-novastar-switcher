@@ -12,7 +12,7 @@
 		"url": "git+https://github.com/bitfocus/companion-module-novastar-unico.git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.4.0",
+		"@companion-module/base": "~1.0.0",
 		"axios": "^1.5.0",
 		"got": "^13.0.0",
 		"ping": "^0.4.4"
