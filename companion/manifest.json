@@ -1,28 +1,33 @@
 {
-	"id": "novastar-unico",
-	"name": "novastar-unico",
-	"shortname": "novastar",
-	"description": "Companion module for Novastar Unico Devices",
-	"version": "1.0.0",
-	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-novastar-unico.git",
-	"bugs": "https://github.com/bitfocus/companion-module-novastar-unico/issues",
-	"maintainers": [
-		{
-			"name": "Q",
-			"email": "qiqi@novastar.tech"
-		}
-	],
-	"runtime": {
-		"type": "node18",
-		"api": "nodejs-ipc",
-		"apiVersion": "1.0.0",
-		"entrypoint": "../src/main.js"
-	},
-	"legacyIds": [],
-	"manufacturer": "NovaStar",
-	"products": ["N10","N20","P10","P20","D32","Q8"],
-	"keywords": [
-		"Unico"
-	]
+  "id": "novastar-switcher",
+  "name": "novastar-switcher",
+  "shortname": "switcher",
+  "description": "诺瓦星云视频切换器配套插件",
+  "version": "1.1.0",
+  "license": "MIT",
+  "repository": "git+https://github.com/bitfocus/companion-module-novastar-switcher.git",
+  "bugs": "https://github.com/bitfocus/companion-module-novastar-switcher/issues",
+  "maintainers": [
+    {
+      "name": "NovastarQQ",
+      "email": "qiqi@novastar.tech"
+    }
+  ],
+  "runtime": {
+    "type": "node18",
+    "api": "nodejs-ipc",
+    "apiVersion": "0.0.0",
+    "entrypoint": "../src/main.js"
+  },
+  "legacyIds": [],
+  "manufacturer": "诺瓦星云",
+  "products": [
+    "N10",
+    "N20",
+    "D12",
+    "D32"
+  ],
+  "keywords": [
+    "诺瓦星云"
+  ]
 }

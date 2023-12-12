@@ -1,16 +1,23 @@
-## NovaStar
+## 诺瓦星云-视频切换器 配套插件
 
-This module will allow you to control the following NovaStar products: N10, N20, P10, P20, D32 and Q8.
+该模块允许用户控制以下设备: N10, N20, D12 and D32.
 
-### Configuration
+### 配置
 
-- Enter the IP address of the device in the configuration settings.
-- The device will use HTTP/HTTPS port 8088.
+- 在配置界面输入设备的IP及Port
+- 部分设备需要输入帐号密码
 
-**Available actions:**
+**支持的 Actions:**
 
 - Take
 - Cut
 - FTB
 - Freeze
 - Preset
+- Preset Destination
+
+**支持的 Feedbacks:**
+
+- FTB Status Detection
+- Freeze Status Detection
+- PGM Status Detection
