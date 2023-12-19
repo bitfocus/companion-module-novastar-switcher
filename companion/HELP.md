@@ -1,13 +1,12 @@
-## 诺瓦星云-视频切换器 配套插件
+## nuowaxingyun
 
-该模块允许用户控制以下设备: N10, N20, D12 and D32.
+This module will allow you to control the following Nuowaxingyun products: N10, N20, D12 and D32.
 
-### 配置
+### Configuration
 
-- 在配置界面输入设备的IP及Port
-- 部分设备需要输入帐号密码
+- Enter the IP address of the device in the configuration settings.
 
-**支持的 Actions:**
+**Available actions:**
 
 - Take
 - Cut
@@ -16,7 +15,7 @@
 - Preset
 - Preset Destination
 
-**支持的 Feedbacks:**
+**Available Feedbacks:**
 
 - FTB Status Detection
 - Freeze Status Detection

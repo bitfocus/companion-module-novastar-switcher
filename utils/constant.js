@@ -179,4 +179,4 @@ export const DEVICE_PRESETS = {
   'd32': 1024
 }
 
-export const DEVICES_INFORMATION = 'This module will allow you to control the following products: N10, N20, D12 and D32.'
+export const DEVICES_INFORMATION = 'This module will allow you to control the following Nuowaxingyun products: N10, N20, D12 and D32.'
