@@ -19,7 +19,10 @@
     "apiVersion": "0.0.0",
     "entrypoint": "../src/main.js"
   },
-  "legacyIds": ["novastar-unico","novastar-d12"],
+  "legacyIds": [
+    "novastar-unico",
+    "novastar-d12"
+  ],
   "manufacturer": "Nuowaxingyun",
   "products": [
     "N10",
