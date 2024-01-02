@@ -3,7 +3,7 @@
   "name": "novastar-switcher",
   "shortname": "switcher",
   "description": "Companion module for Nuowaxingyun Switcher Devices",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "repository": "git+https://github.com/bitfocus/companion-module-novastar-switcher.git",
   "bugs": "https://github.com/bitfocus/companion-module-novastar-switcher/issues",
