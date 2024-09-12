@@ -10,7 +10,7 @@
   "maintainers": [
     {
       "name": "NovaStar",
-      "email": ""
+      "email": "software@novastar.tech"
     }
   ],
   "runtime": {
@@ -23,7 +23,7 @@
     "novastar-unico",
     "novastar-d12"
   ],
-  "manufacturer": "Nuowaxingyun",
+  "manufacturer": "NovaStar",
   "products": [
     "N10",
     "N20",
@@ -32,6 +32,6 @@
   ],
   "keywords": [
     "Nuowaxingyun",
-    "Novastar"
+    "NovaStar"
   ]
 }
