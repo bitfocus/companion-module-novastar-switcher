@@ -10,20 +10,6 @@ import {
 	HTTP_Protocol_FREEZE,
 } from './constant.js'
 
-export const getToken = async (url, obj) => {
-	const res = await got.post(`${url}/v1/system/auth/login`, {
-		https: {
-			rejectUnauthorized: false,
-		},
-		json: obj,
-		timeout: {
-			request: 1000,
-		},
-	})
-	const resData = JSON.parse(res.body)
-	return resData
-}
-
 export const getPresetCmd = (index, presetTypeVal) => {
 	let preset_buf = []
 	let preset_buf_len = 0
@@ -123,26 +109,16 @@ export const getSystemDeviceInfo = function () {
 
 // token-error-code：8273
 export async function deal8273(res, cb, args) {
-	this.log('info', `8273: ${res?.body}`)
-	if (res?.code === 8273 || res?.body?.code === 8273) {
-		if (this.config.isOldVersion) {
-			const tokenRes = await getToken(this.config.baseURL, {
-				username: this.config.username,
-				password: this.config.password,
-			})
-			if (tokenRes.code === 0) {
-				this.config.token = tokenRes.data.token
-				await cb.bind(this)(this.config.token, ...args)
-			}
-		} else {
-			const openInfoRes = await getOpenDetail(this.config.url, this.config.UCenterFlag)
-			if (openInfoRes.code === 0) {
-				const { sn, startTime } = openInfoRes.data
-				this.log('info', `handleReqWithToken getOpenDetail resData: ${openInfoRes.data}`)
-				this.config.token = generateToken(sn, startTime)
-				this.log('info', `handleReqWithToken generateToken: ${this.config.token}`)
-				await cb.bind(this)(this.config.token, ...args)
-			}
+  if (res?.code === 8273 || res?.body?.code === 8273) {
+		this.log('debug', `8273: ${res?.body}`)
+		const openInfoRes = await getOpenDetail(this.config.url, this.config.UCenterFlag)
+		if (openInfoRes.code === 0) {
+			const { sn, startTime } = openInfoRes.data
+			this.log('debug', `handleReqWithToken getOpenDetail resData: ${openInfoRes.data}`)
+			this.config.token = generateToken(sn, startTime)
+      this.config.sn = sn
+			this.log('debug', `handleReqWithToken generateToken: ${this.config.token}`)
+			await cb.bind(this)(this.config.token, ...args)
 		}
 	}
 }
@@ -153,7 +129,7 @@ export async function handleReqWithToken(cb, ...args) {
 }
 
 export const getOpenDetail = async (url, UCenterFlag) => {
-	const res = await got.get(`${url}/v1/node/open-detail`, {
+	const res = await got.get(`${url}/node/open-detail`, {
 		timeout: {
 			request: 1000,
 		},
@@ -182,31 +158,12 @@ export const generateToken = (sn, startTime) => {
 }
 
 export const getDeviceList = async (url) => {
-	const res = await got.get(`${url}/v1/ucenter/device-list`, {
+	const res = await got.get(`${url}/ucenter/device-list`, {
 		timeout: {
 			request: 1000,
 		},
 		https: {
 			rejectUnauthorized: false,
-		},
-	})
-	const resData = JSON.parse(res.body)
-	return resData
-}
-
-export const getSwitchEffect = async (url, UCenterFlag, token) => {
-	const res = await got.get(`${url}/v1/screen/global/switch-effect`, {
-		timeout: {
-			request: 1000,
-		},
-		https: {
-			rejectUnauthorized: false,
-		},
-		headers: {
-			Authorization: token,
-			ip: UCenterFlag?.ip,
-			port: UCenterFlag?.port,
-			protocol: UCenterFlag?.protocol,
 		},
 	})
 	const resData = JSON.parse(res.body)

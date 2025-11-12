@@ -1,7 +1,19 @@
+// 冻结
+export const FREEZE_STATUES = {
+	enable: '1',
+	disable: '0',
+}
+
+// 黑屏
+export const FTB_STATUES = {
+	enable: '1',
+	disable: '0',
+}
+
 // D Series Display Modes
 export const Central_Control_Protocol_FTB = [
 	{
-		id: '0',
+		id: FTB_STATUES.disable,
 		label: 'No fade to black',
 		cmd: Buffer.from([
 			0x55, 0xaa, 0x00, 0xaf, 0xfe, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x30, 0x00, 0x00, 0x00, 0x00, 0x8b, 0x00, 0x00,
@@ -16,7 +28,7 @@ export const Central_Control_Protocol_FTB = [
 		]),
 	},
 	{
-		id: '1',
+		id: FTB_STATUES.enable,
 		label: 'Fade to black',
 		cmd: Buffer.from([
 			0x55, 0xaa, 0x00, 0x92, 0xfe, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x30, 0x00, 0x00, 0x00, 0x00, 0x8b, 0x00, 0x00,
@@ -34,7 +46,7 @@ export const Central_Control_Protocol_FTB = [
 
 export const Central_Control_Protocol_FREEZE = [
 	{
-		id: '0',
+		id: FREEZE_STATUES.disable,
 		label: 'Unfreeze',
 		cmd: Buffer.from([
 			0x55, 0xaa, 0x00, 0xe5, 0xfe, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x30, 0x00, 0x00, 0x00, 0x00, 0x69, 0x00, 0x00,
@@ -47,7 +59,7 @@ export const Central_Control_Protocol_FREEZE = [
 		]),
 	},
 	{
-		id: '1',
+		id: FREEZE_STATUES.enable,
 		label: 'Freeze',
 		cmd: Buffer.from([
 			0x55, 0xaa, 0x00, 0xca, 0xfe, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x30, 0x00, 0x00, 0x00, 0x00, 0x69, 0x00, 0x00,
@@ -110,27 +122,27 @@ export const Central_Control_Protocol_Device_PresetType = {
 
 export const HTTP_Protocol_FTB = [
 	{
-		id: '0',
+		id: FTB_STATUES.disable,
 		label: 'No fade to black',
-		default: '0',
+		default: FTB_STATUES.disable,
 	},
 	{
-		id: '1',
+		id: FTB_STATUES.enable,
 		label: 'Fade to black',
-		default: '1',
+		default: FTB_STATUES.enable,
 	},
 ]
 
 export const HTTP_Protocol_FREEZE = [
 	{
-		id: '0',
+		id: FREEZE_STATUES.disable,
 		label: 'Unfreeze',
-		default: '0',
+		default: FREEZE_STATUES.disable,
 	},
 	{
-		id: '1',
+		id: FREEZE_STATUES.enable,
 		label: 'Freeze',
-		default: '1',
+		default: FREEZE_STATUES.enable,
 	},
 ]
 
@@ -147,6 +159,19 @@ export const COMMON_PRESET_TYPE = [
 	},
 ]
 
+export const HTTP_PGM_PRESET_TYPE = [
+	{
+		id: 'pgmTake',
+		label: 'Load to\nPGM\nTake',
+		default: 'pgmTake',
+	},
+	{
+		id: 'pgmTakeKeyFrame',
+		label: 'Load to\nPGM\nTake KF',
+		default: 'pgmTakeKeyFrame',
+	},
+]
+
 export const PROTOCOL_TYPE = {
 	http: { id: 'http', label: 'http' },
 	https: { id: 'https', label: 'https' },
@@ -158,12 +183,12 @@ export const PRESET_TYPE = {
 }
 
 export const HTTP_PRESET_TYPE = {
-	undefined: 0,
+	// 下发auto的0会导致server接口异常，暂时改为默认pvw
+	// auto: 0,
 	pvw: 4,
 	pgm: 2,
+	pgmpvw: 6,
 }
-
-export const RETRY_COUNT = 3
 
 export const HTTP_Protocol_Swap_Copy = [
 	{
@@ -191,12 +216,82 @@ export const HTTP_Protocol_Output_Switch = [
 	},
 ]
 
-export const HTTP_DEVICES = ['n10', 'n20', 'd32'];
+export const DEVICE_PROTOCOL = {
+	port: '8088',
+	linkType: 'http',
+}
 
-export const CMD_DEVICES = ['d12'];
+export const TAKE_TYPE = {
+	cut: 0,
+	fade: 1,
+}
 
-export const DEVICES = ['n10', 'n20', 'd12', 'd32'];
+export const PRESET_TAKE_STATUES = {
+	enable: 0,
+	disable: 1,
+}
 
+export const PRESET_KEYFRAME_STATUES = {
+	enable: 0,
+	disable: 1,
+}
+
+export const SWAP_STATUES = {
+	swap: 1,
+	copy: 0,
+}
+
+// 本地存储是否选中的状态枚举
+export const SELECT_STATUES = {
+	enable: 1,
+	disable: 0,
+}
+
+// cut方向
+export const DIRECTION_TYPE = {
+	cut: 0,
+	matchPgm: 1,
+}
+
+// 图层用到的sceneType
+export const SCENE_TYPE = [
+	{ id: 4, label: 'PVW' },
+	{ id: 2, label: 'PGM' },
+]
+
+// 基础变量
+export const defaultVariableDefinitions = [
+	{ variableId: 'time', name: 'Take effect duration value', value: 0.5 },
+	{ variableId: 'swapStatus', name: 'Swap/Copy status value', value: 'Swap' },
+	{ variableId: 'sceneType', name: 'Preset loading area value', value: 'pvw' }, // 默认应为auto，暂时改为pvw
+	{ variableId: 'loadPresetAttrInfo', name: 'Preset loading attribute value', value: 'PVW' },
+	{
+		variableId: 'presetTake',
+		name: 'Take status value when preset is loaded to PGM',
+		value: PRESET_TAKE_STATUES.disable,
+	},
+	{
+		variableId: 'presetKeyFrame',
+		name: 'KeyFrame status value when preset is loaded to PGM',
+		value: PRESET_KEYFRAME_STATUES.disable,
+	},
+]
+
+/**
+ * pictureType 和 sourceType 的对应关系
+ * 图片类型 pictureType：【1：BKG 2:LOGO 3:OSD 4：时钟 5：内置源 （4，5暂未使用）】
+ * sourceType: 【 0：空图层 1：无源； 2：输入类型；3：PGM；4：PVW； 5：BKG图片 6：LOGO图片  7：IPC类型8：截取源类型 9:   拼接源 10: ipc拼接屏11: 内置源;  12:内置图形源 13：U盘源 14：图片OSD 15：文字OSD16：音柱17：推流18：录制19:cleanfeed】
+ * 所以这里的sourceType对应关系为：pictureObj.type 1 - sourceType 5; pictureObj.type 2 - sourceType 6; pictureObj.type 3 - sourceType 14
+ */
+export const PICTURE_TYPE_SOURCE_TYPE = {
+	1: 5,
+	2: 6,
+	3: 14,
+}
+
+export const HTTP_DEVICES = ['n10', 'n20', 'd32']
+export const CMD_DEVICES = ['d12']
+export const DEVICES = ['n10', 'n20', 'd12', 'd32']
 export const DEVICE_PRESETS = {
   'n10': 128,
   'n20': 128,
@@ -205,3 +300,5 @@ export const DEVICE_PRESETS = {
 };
 
 export const DEVICES_INFORMATION = 'This module will allow you to control the following products: N10, N20, D12 and D32.';
+
+export const NAME = 'novastar'

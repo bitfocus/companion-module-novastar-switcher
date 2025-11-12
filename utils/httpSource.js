@@ -1,17 +1,34 @@
 import got from 'got'
 import { combineRgb } from '@companion-module/base'
+import { NAME, PICTURE_TYPE_SOURCE_TYPE } from './constant.js'
+
+export const updateSourceVaraiable = (list) => {
+	const sourceArr = list.map((item) => ({
+		variableId: `sourceId_${item.sourceId}`,
+		name: `Input source number: ${item.sourceId}`,
+		value: item.name,
+	}))
+	const sourceObj = {}
+	sourceArr.forEach((variable) => {
+		sourceObj[variable.variableId] = variable.value
+	})
+	return {
+		sourceVariableDefinitions: sourceArr,
+		sourceDefaultVariableValues: sourceObj,
+	}
+}
 
 export const getSourceFormatData = (list, instance) => {
 	const playPresets = {}
 	for (let i = 1; i <= list.length; i++) {
 		const item = list[i - 1]
-		const screen = {
+		const source = {
 			type: 'button',
 			category: 'Sources',
 			name: item.name,
 			sourceId: item.sourceId,
 			style: {
-				text: item.name,
+				text: `$(${NAME}:sourceId_${item.sourceId})`,
 				size: 'auto',
 				color: combineRgb(0, 0, 0),
 				bgcolor: combineRgb(0, 255, 0),
@@ -33,7 +50,7 @@ export const getSourceFormatData = (list, instance) => {
 			feedbacks: [],
 		}
 
-		playPresets['source-play' + item.sourceId] = screen
+		playPresets['source-play' + item.sourceId] = source
 	}
 
 	return playPresets
@@ -47,7 +64,7 @@ export const getSourceInput = async (url, token, instance) => {
 	instance.log('log', 'Input来了')
 	try {
 		const res = await got
-			.get(`${url}/v1/interface/list-thumb`, {
+			.get(`${url}/interface/list-thumb`, {
 				headers: {
 					Authorization: token,
 					ip: instance.config?.UCenterFlag?.ip,
@@ -83,10 +100,10 @@ export const getSourceInput = async (url, token, instance) => {
 // 获取屏幕的源
 export const getSourceScreen = async (url, token, instance) => {
 	let obj = []
-	instance.log('log', 'Screen来了')
+	instance.log('log', '屏幕的源来了')
 	try {
 		const res = await got
-			.get(`${url}/v1/screen/list-detail`, {
+			.get(`${url}/screen/list-detail`, {
 				headers: {
 					Authorization: token,
 					ip: instance.config?.UCenterFlag?.ip,
@@ -123,7 +140,7 @@ export const getSourcePicture = async (url, token, instance) => {
 	instance.log('log', '图片的源来了')
 	try {
 		const res = await got
-			.get(`${url}/v1/picture/list`, {
+			.get(`${url}/picture/list`, {
 				headers: {
 					Authorization: token,
 					ip: instance.config?.UCenterFlag?.ip,
@@ -137,12 +154,12 @@ export const getSourcePicture = async (url, token, instance) => {
 			.json()
 
 		if (res.code === 0) {
-			// 图片类型 1：BKG 2:LOGO 3:OSD 4：时钟 5：内置源
 			obj = (res.data.list ?? []).map((item) => {
+				const pictureSourceType = PICTURE_TYPE_SOURCE_TYPE[item.pictureObj.type]
 				return {
 					...item,
-					sourceId: item.pictureObj.type + '-' + item.pictureId + '-' + 'pic',
-					sourceType: item.pictureObj.type, //
+					sourceId: pictureSourceType + '-' + item.pictureId + '-' + 'pic',
+					sourceType: pictureSourceType,
 					name: item.general.name,
 				}
 			})
@@ -156,7 +173,7 @@ export const getSourceCrop = async (url, token, instance) => {
 	let obj = []
 	try {
 		const res = await got
-			.get(`${url}/v1/interface/crop-source`, {
+			.get(`${url}/interface/crop-source`, {
 				headers: {
 					Authorization: token,
 					ip: instance.config?.UCenterFlag?.ip,
@@ -184,7 +201,6 @@ export const getSourceCrop = async (url, token, instance) => {
 }
 
 export const getSourcePresets = async (url, token, instance) => {
-	instance.log('info', '来了')
 	const res = await Promise.all([
 		getSourceInput(url, token, instance),
 		getSourceScreen(url, token, instance),

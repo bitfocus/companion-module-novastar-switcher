@@ -1,6 +1,15 @@
 import { combineRgb } from '@companion-module/base'
 import { isHttpDevice, isHttpDeviceWithDQ } from '../utils/index.js'
-import { DEVICE_PRESETS } from '../utils/constant.js'
+import {
+	PRESET_KEYFRAME_STATUES,
+	PRESET_TAKE_STATUES,
+	SWAP_STATUES,
+	NAME,
+	FTB_STATUES,
+	FREEZE_STATUES,
+	CMD_DEVICES,
+	DEVICE_PRESETS,
+} from '../utils/constant.js'
 
 const displayPresets = {
 	take: {
@@ -89,7 +98,6 @@ const displayPresets = {
 			},
 		],
 	},
-
 	freeze: {
 		type: 'button',
 		category: 'Display',
@@ -132,60 +140,79 @@ const displayPresets = {
 			},
 		],
 	},
-
-	// presetType: 2: PGM, 4: PVW (http)
-	// presetType: 1: PGM, 0: PVW (cmd)
-	presetType: {
-		type: 'button',
-		category: 'Display',
-		name: 'presetType',
-		style: {
-			text: 'Load to\nPVW',
-			size: '18',
-			color: combineRgb(255, 255, 255),
-			bgcolor: combineRgb(0, 0, 0),
-		},
-		steps: [
-			{
-				down: [
-					{
-						actionId: 'presetType',
-						options: {
-							presetType: 'pgm',
-						},
-					},
-				],
-			},
-			{
-				down: [
-					{
-						actionId: 'presetType',
-						options: {
-							presetType: 'pvw',
-						},
-					},
-				],
-			},
-		],
-		feedbacks: [
-			{
-				feedbackId: 'pgm',
-				style: {
-					bgcolor: combineRgb(255, 0, 0),
-					text: 'Load to\nPGM',
-				},
-				options: {},
-			},
-		],
-	},
 }
 
-const swapCopy = {
+// presetType: 2: PGM, 4: PVW (http)
+const httpPresetType = {
 	type: 'button',
-	name: 'SwapCopy',
 	category: 'Display',
+	name: 'presetType',
 	style: {
-		text: 'Swap\nCopy',
+		text: `Load to\n$(${NAME}:loadPresetAttrInfo)`,
+		size: 'auto',
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(0, 0, 0),
+	},
+	steps: [
+		{
+			down: [
+				{
+					actionId: 'presetType',
+					options: {
+						presetType: 'pvw',
+					},
+				},
+			],
+		},
+		{
+			down: [
+				{
+					actionId: 'presetType',
+					options: {
+						presetType: 'pgm',
+					},
+				},
+			],
+		},
+		{
+			down: [
+				{
+					actionId: 'presetType',
+					options: {
+						presetType: 'pgmTake',
+					},
+				},
+			],
+		},
+		{
+			down: [
+				{
+					actionId: 'presetType',
+					options: {
+						presetType: 'pgmTakeKeyFrame',
+					},
+				},
+			],
+		},
+	],
+	feedbacks: [
+		{
+			feedbackId: 'pgm',
+			style: {
+				bgcolor: combineRgb(255, 0, 0),
+			},
+			options: {},
+		},
+	],
+}
+
+// presetType: 1: PGM, 0: PVW (cmd)
+const cmdPresetType = {
+	type: 'button',
+	category: 'Display',
+	name: 'presetType',
+	style: {
+		text: 'Load to\nPVW',
 		size: '18',
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(0, 0, 0),
@@ -194,9 +221,9 @@ const swapCopy = {
 		{
 			down: [
 				{
-					actionId: 'swapCopy',
+					actionId: 'presetType',
 					options: {
-						swapCopy: '0',
+						presetType: 'pgm',
 					},
 				},
 			],
@@ -204,9 +231,9 @@ const swapCopy = {
 		{
 			down: [
 				{
-					actionId: 'swapCopy',
+					actionId: 'presetType',
 					options: {
-						swapCopy: '1',
+						presetType: 'pvw',
 					},
 				},
 			],
@@ -214,9 +241,10 @@ const swapCopy = {
 	],
 	feedbacks: [
 		{
-			feedbackId: 'swapCopy',
+			feedbackId: 'pgm',
 			style: {
 				bgcolor: combineRgb(255, 0, 0),
+				text: 'Load to\nPGM',
 			},
 			options: {},
 		},
@@ -244,6 +272,55 @@ const matchPgm = {
 		},
 	],
 	feedbacks: [],
+}
+
+const swapCopy = {
+	type: 'button',
+	name: 'SwapCopy',
+	category: 'Display',
+	previewStyle: {
+		text: 'Swap\nCopy',
+		size: '18',
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(0, 0, 0),
+	},
+	style: {
+		text: `$(${NAME}:swapStatus)`,
+		size: '18',
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(0, 0, 0),
+	},
+	steps: [
+		{
+			down: [
+				{
+					actionId: 'swapCopy',
+					options: {
+						swapCopy: SWAP_STATUES['copy'],
+					},
+				},
+			],
+		},
+		{
+			down: [
+				{
+					actionId: 'swapCopy',
+					options: {
+						swapCopy: SWAP_STATUES['swap'],
+					},
+				},
+			],
+		},
+	],
+	feedbacks: [
+		{
+			feedbackId: 'swapCopy',
+			style: {
+				bgcolor: combineRgb(255, 0, 0),
+			},
+			options: {},
+		},
+	],
 }
 
 // Take Time 旋钮
@@ -289,13 +366,13 @@ const takeTimeLeft = {
 	category: 'Display',
 	name: 'Take\nTime-',
 	previewStyle: {
-		text: 'Take\nTime-',
+		text: `Time-\n$(${NAME}:time)s`,
 		size: '18',
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(0, 0, 0),
 	},
 	style: {
-		text: 'Time-',
+		text: `Time-\n$(${NAME}:time)s`,
 		size: '18',
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(0, 0, 0),
@@ -320,13 +397,13 @@ const takeTimeRight = {
 	category: 'Display',
 	name: 'Take\nTime+',
 	previewStyle: {
-		text: 'Take\nTime+',
+		text: `Time+\n$(${NAME}:time)s`,
 		size: '18',
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(0, 0, 0),
 	},
 	style: {
-		text: 'Time+',
+		text: `Time+\n$(${NAME}:time)s`,
 		size: '18',
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(0, 0, 0),
@@ -389,6 +466,245 @@ const mapping = {
 	],
 }
 
+// 屏蔽 加载场景至pgm使用特效和kf
+// const presetTake = {
+// 	type: 'button',
+// 	name: 'PresetTake',
+// 	category: 'Display',
+// 	style: {
+// 		text: 'Preset+Take',
+// 		size: 'auto',
+// 		color: combineRgb(255, 255, 255),
+// 		bgcolor: combineRgb(0, 0, 0),
+// 	},
+// 	steps: [
+// 		{
+// 			down: [
+// 				{
+// 					actionId: 'presetTakeAuto',
+// 				},
+// 			],
+// 		},
+// 	],
+// 	feedbacks: [
+// 		{
+// 			feedbackId: 'presetTake',
+// 			style: {
+// 				bgcolor: combineRgb(10, 132, 255),
+// 			},
+// 			options: {},
+// 		},
+// 	],
+// }
+
+// const presetKeyFrame = {
+// 	type: 'button',
+// 	name: 'PresetKeyFrame',
+// 	category: 'Display',
+// 	style: {
+// 		text: 'Preset + \nKeyFrame',
+// 		size: '14',
+// 		color: combineRgb(255, 255, 255),
+// 		bgcolor: combineRgb(0, 0, 0),
+// 	},
+// 	steps: [
+// 		{
+// 			down: [
+// 				{
+// 					actionId: 'presetKeyFrameAuto',
+// 				},
+// 			],
+// 		},
+// 	],
+// 	feedbacks: [
+// 		{
+// 			feedbackId: 'presetKeyFrame',
+// 			style: {
+// 				bgcolor: combineRgb(10, 132, 255),
+// 			},
+// 			options: {},
+// 		},
+// 	],
+// }
+
+// 指定屏幕基础操作
+const generateSpecifiedScreenPresets = (instance, screenList) => {
+	if (!screenList?.length) return {}
+
+	const deafaultScreenId = Object.values(instance.presetDefinitionScreen)[0]?.screenId
+	const specifiedScreenTake = {
+		type: 'button',
+		category: 'Quick Actions',
+		name: 'Specified Screen TAKE',
+		style: {
+			text: `Specified Screen TAKE`,
+			size: 'auto',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(255, 0, 0),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenTake',
+						options: {
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+		],
+		feedbacks: [],
+	}
+	const specifiedScreenCut = {
+		type: 'button',
+		category: 'Quick Actions',
+		name: 'Specified Screen CUT',
+		style: {
+			text: `Specified Screen CUT`,
+			size: 'auto',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(255, 0, 0),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenCut',
+						options: {
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+		],
+		feedbacks: [],
+	}
+	const specifiedScreenFtb = {
+		type: 'button',
+		category: 'Quick Actions',
+		name: 'Specified Screen FTB',
+		style: {
+			text: `Specified Screen FTB`,
+			size: 'auto',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(0, 0, 0),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenFtb',
+						options: {
+							ftb: FTB_STATUES.enable,
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenFtb',
+						options: {
+							ftb: FTB_STATUES.disable,
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+		],
+		feedbacks: [
+			{
+				feedbackId: 'specified-screen-ftb',
+				style: {
+					bgcolor: combineRgb(255, 0, 0),
+				},
+			},
+			{
+				feedbackId: 'specified-screen-unftb',
+				style: {
+					bgcolor: combineRgb(255, 255, 255),
+				},
+			},
+		],
+	}
+	const specifiedScreenFreeze = {
+		type: 'button',
+		category: 'Quick Actions',
+		name: 'Specified Screen Freeze',
+		style: {
+			text: `Specified Screen Freeze`,
+			size: 'auto',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(0, 0, 0),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenFreeze',
+						options: {
+							freeze: FREEZE_STATUES.enable,
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenFreeze',
+						options: {
+							freeze: FREEZE_STATUES.disable,
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+		],
+		feedbacks: [
+			{
+				feedbackId: 'specified-screen-freeze',
+				style: {
+					bgcolor: combineRgb(255, 0, 0),
+				},
+			},
+		],
+	}
+	const specifiedScreenMatchPgm = {
+		type: 'button',
+		category: 'Quick Actions',
+		name: 'Specified Screen MatchPGM',
+		style: {
+			text: `Specified Screen MatchPGM`,
+			size: 'auto',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(0, 0, 0),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'specifiedScreenMatchPgm',
+						options: {
+							screenIds: [deafaultScreenId],
+						},
+					},
+				],
+			},
+		],
+		feedbacks: [],
+	}
+	return {
+		specifiedScreenTake,
+		specifiedScreenCut,
+		specifiedScreenFtb,
+		specifiedScreenFreeze,
+		specifiedScreenMatchPgm,
+	}
+}
+
 // F系列场景
 const getFseriesPresets = (num) => {
 	const playPresets = {}
@@ -422,10 +738,22 @@ const getFseriesPresets = (num) => {
 	return playPresets
 }
 
-export const getPresetDefinitions = function (instance) {
+export const getPresetDefinitions = function (instance, screenList) {
 	let basicPresets = {}
 	if (isHttpDevice(instance)) {
-		basicPresets = { ...displayPresets, swapCopy, matchPgm, takeTime, takeTimeLeft, takeTimeRight }
+		const specifiedScreenPresets = generateSpecifiedScreenPresets(instance, screenList)
+		basicPresets = {
+			...displayPresets,
+			httpPresetType,
+			swapCopy,
+			matchPgm,
+			takeTime,
+			takeTimeLeft,
+			takeTimeRight,
+			// presetTake,
+			// presetKeyFrame,
+			...specifiedScreenPresets,
+		}
 		if (isHttpDeviceWithDQ(instance)) {
 			basicPresets = { ...basicPresets, mapping }
 		}
@@ -433,7 +761,7 @@ export const getPresetDefinitions = function (instance) {
 		// F系列场景生成
 		const presetNum = parseInt(DEVICE_PRESETS[instance.config.modelId]) ?? 128
 		const fSeriesPresets = getFseriesPresets(presetNum)
-		basicPresets = { ...displayPresets, ...fSeriesPresets }
+		basicPresets = { ...displayPresets, cmdPresetType, ...fSeriesPresets }
 	}
 
 	return basicPresets

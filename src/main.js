@@ -5,21 +5,22 @@ import { getActions } from './actions.js'
 import { getPresetDefinitions } from './presets.js'
 import { getFeedbacks } from './feedbacks.js'
 import { upgradeScripts } from './upgrades.js'
+import { getVaraiableDefinitions } from './variables.js'
 
-import { HTTP_DEVICES, PROTOCOL_TYPE, CMD_DEVICES, DEVICES_INFORMATION, RETRY_COUNT } from '../utils/constant.js'
 import {
-	generateToken,
-	getDeviceList,
-	getOpenDetail,
-	getSystemDeviceInfo,
-	getToken,
-	getSwitchEffect,
-} from '../utils/index.js'
-import { retry } from '../utils/retry.js'
-import { getDevicePresets, getPresetFormatData } from '../utils/httpPresets.js'
-import { getScreenPresets, getScreenFormatData } from '../utils/httpScreen.js'
-import { getLayerPresets, getLayerFormatData } from '../utils/httpLayers.js'
-import { getSourcePresets, getSourceFormatData } from '../utils/httpSource.js'
+	HTTP_DEVICES,
+	PROTOCOL_TYPE,
+	CMD_DEVICES,
+	DEVICES_INFORMATION,
+	DEVICE_PROTOCOL,
+	TAKE_TYPE,
+	defaultVariableDefinitions,
+} from '../utils/constant.js'
+import { generateToken, getDeviceList, getOpenDetail, getSystemDeviceInfo } from '../utils/index.js'
+import { getDevicePresets, getPresetFormatData, updatePresetVaraiable } from '../utils/httpPresets.js'
+import { getScreenPresets, getScreenFormatData, updateScreenVaraiable } from '../utils/httpScreen.js'
+import { getLayerFormatData } from '../utils/httpLayers.js'
+import { getSourcePresets, getSourceFormatData, updateSourceVaraiable } from '../utils/httpSource.js'
 
 const LATCH_ACTIONS = ['ftb', 'freeze', 'presetType', 'swapCopy']
 class ModuleInstance extends InstanceBase {
@@ -31,12 +32,17 @@ class ModuleInstance extends InstanceBase {
 		this.DEVICES_INFO = getSystemDeviceInfo()
 		this.DEVICES = Object.values(this.DEVICES_INFO)
 
+		// 图层选中唯一
+		this.layerSelect = -1
 		this.screenSelect = {}
-		this.layerSelect = {}
+		this.presetStatus = {}
+		this.specifiedScreenFtbStatus = {}
+		this.specifiedScreenFreezeStatus = {}
 		this.presetDefinitionPreset = {}
 		this.presetDefinitionScreen = {}
 		this.presetDefinitionLayer = {}
 		this.presetDefinitionSource = {}
+		this.takeType = TAKE_TYPE['fade']
 
 		// Sort alphabetical
 		this.DEVICES.sort(function (a, b) {
@@ -79,7 +85,7 @@ class ModuleInstance extends InstanceBase {
 				width: 6,
 				default: '192.168.0.10',
 				regex: Regex.IP,
-				require: true,
+				required: true,
 			},
 			{
 				type: 'dropdown',
@@ -89,44 +95,12 @@ class ModuleInstance extends InstanceBase {
 				choices: this.DEVICES,
 				default: this.DEVICES[0].id,
 			},
-			// {
-			//   type: 'textinput',
-			//   id: 'port',
-			//   label: 'Port',
-			//   width: 6,
-			//   default: '8088',
-			//   regex: Regex.PORT,
-			// },
-			{
-				type: 'textinput',
-				id: 'username',
-				label: 'Username',
-				width: 6,
-				default: '',
-				isVisibleData: { httpDevices: HTTP_DEVICES, config: this.config },
-				isVisible: (options, dataInfo) =>
-					dataInfo.httpDevices.includes(options.modelId) &&
-					!!dataInfo.config.isOldVersion &&
-					options.modelId === dataInfo.config.modelId,
-			},
-			{
-				type: 'textinput',
-				id: 'password',
-				label: 'Password',
-				width: 6,
-				default: '',
-				isVisibleData: { httpDevices: HTTP_DEVICES, config: this.config },
-				isVisible: (options, dataInfo) =>
-					dataInfo.httpDevices.includes(options.modelId) &&
-					!!dataInfo.config.isOldVersion &&
-					options.modelId === dataInfo.config.modelId,
-			},
 		]
 	}
 
 	// When module gets deleted
 	async destroy() {
-		this.log('info', 'destroy:' + this.id)
+		this.log('debug', 'destroy:' + this.id)
 		if (this.socket !== undefined) {
 			this.socket.destroy()
 		}
@@ -144,72 +118,50 @@ class ModuleInstance extends InstanceBase {
 		}
 	}
 
-	/** devices http handle start */
-
+	/** Switcher devices handle start */
 	async getDevicesByUCenter() {
-		this.log('info', `getDevicesByUCenter-start...`)
+		this.log('debug', `getDevicesByUCenter-start...`)
 
 		this.config.protocol = 'https'
 		this.config.port = '19998'
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
+		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico/v1`
 
 		try {
 			const devicesRes = await getDeviceList(this.config.baseURL)
 
 			if (devicesRes.code === 0) {
 				const device = devicesRes.data?.list?.find((item) => item.ip === this.config.host)
-				const deviceProtocol = device?.protocols?.[0]?.linkType ?? 'http'
-				const protocol = ['http', 'https'].includes(deviceProtocol) ? deviceProtocol : 'http'
-				this.log('info', `getDevicesByUCenter-protocol:${protocol}`)
-
+				const deviceProtocol = device?.protocols?.find((item) => item.linkType === 'http') ?? DEVICE_PROTOCOL
+				const { linkType: protocol, port } = deviceProtocol
 				// 该信息需在server接口header中同步下发
 				this.config.UCenterFlag = {
 					protocol,
+					port,
 					ip: '127.0.0.1',
-					port: '8088',
 				}
+				this.log(
+					'info',
+					`getDevicesByUCenter-protocol:${JSON.stringify(deviceProtocol)},
+          UCenterFlag:${JSON.stringify(this.config.UCenterFlag)}`
+				)
 				await this.getDeviceStatusByOpenDetail()
-				this.getGlobalSwitchEffect()
 			}
 		} catch (e) {
-			await this.getProtocol()
-		}
-	}
-
-	async getDeviceStatusByPWD() {
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
-
-		this.log('info', `getDeviceStatusByPWD-url:${this.config.baseURL} - ${new Date().getTime()}`)
-		this.log('info', `tokenInfo:${this.config.username}/${this.config.password}`)
-
-		const res = await getToken(this.config.baseURL, {
-			username: this.config.username,
-			password: this.config.password,
-		})
-
-		this.log('info', `tokenRes:`)
-		this.log('info', JSON.stringify(res))
-
-		if (res.code === 0) {
-			this.config.token = res.data.token
-			this.updateStatus(InstanceStatus.Ok)
-		} else if (res.code === 8274) {
-			this.updateStatus(InstanceStatus.BadConfig)
-		} else {
-			this.updateStatus(InstanceStatus.ConnectionFailure)
+			this.updateStatus(InstanceStatus.ConnectionFailure, 'Please reconfigure the device connection information.')
 		}
 	}
 
 	async getDeviceStatusByOpenDetail() {
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
-		this.log('info', `getDeviceStatusByOpenDetail-url:${this.config.baseURL} - ${new Date().getTime()}`)
+		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico/v1`
+		this.log('debug', `getDeviceStatusByOpenDetail-url:${this.config.baseURL} - ${new Date().getTime()}`)
 
 		const res = await getOpenDetail(this.config.baseURL, this.config.UCenterFlag)
-		this.log('info', `getDeviceStatusByOpenDetail-res:${JSON.stringify(res)}`)
+		this.log('debug', `getDeviceStatusByOpenDetail-res:${JSON.stringify(res)}`)
 
 		if (res.code === 0) {
+			this.config.sn = res.data.sn
 			this.config.token = generateToken(res.data.sn, res.data.startTime)
-			this.log('info', `generateToken-res: ${this.config.token}`)
+			this.log('debug', `generateToken-res: ${this.config.token}`)
 			this.updateStatus(InstanceStatus.Ok)
 
 			if (HTTP_DEVICES.includes(this.config.modelId)) {
@@ -217,94 +169,41 @@ class ModuleInstance extends InstanceBase {
 				this.presetBeat = setInterval(() => this.getAllData(), 10000) //check every 10s
 			}
 		} else if (res.code === 8273) {
-			this.log('info', `getDeviceStatusByOpenDetail-Interface exception: ${JSON.stringify(res)}`)
+			this.log('debug', `getDeviceStatusByOpenDetail-Interface exception: ${JSON.stringify(res)}`)
 			throw Error('Interface exception')
 		} else {
 			this.updateStatus(InstanceStatus.ConnectionFailure)
 		}
 	}
 
-	async getGlobalSwitchEffect() {
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
-		const res = await getSwitchEffect(this.config.baseURL, this.config.UCenterFlag, this.config.token)
-		this.log('info', `${res?.code}`)
-		if (res.code === 0) {
-			this.config.globalSwitchEffect = res.data?.switchEffect || {}
-		} else {
-			this.log('info', `getGlobalSwitchEffect exception: ${JSON.stringify(res)}`)
-		}
-	}
-
-	async getProtocol() {
-		this.log('info', 'getProtocol')
-		this.config.port = 8088
-		const func = this.config.isOldVersion ? this.getDeviceStatusByPWD : this.getDeviceStatusByOpenDetail
-		try {
-			try {
-				this.config.protocol = 'http'
-				await retry(func.bind(this), RETRY_COUNT)
-			} catch (e) {
-				this.config.protocol = 'https'
-				await retry(func.bind(this), RETRY_COUNT)
-			}
-			this.getGlobalSwitchEffect()
-		} catch (e) {
-			this.log('info', `getProtocol-${this.config.protocol}-cache-${e.code}`)
-			if (!this.config.isOldVersion) {
-				this.config.isOldVersion = true
-				this.updateStatus(InstanceStatus.ConnectionFailure, 'Please reconfigure the device connection information.')
-			} else {
-				this.updateStatus(InstanceStatus.ConnectionFailure)
-			}
-		}
-	}
-
 	async getPresetList() {
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
+		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico/v1`
 		let obj = []
 		try {
 			const res = await getDevicePresets(this.config.baseURL, this.config.token, this)
 			if (res.code === 0) {
 				obj = res.data.list
+				this.log('debug', `getPresetList-res:${JSON.stringify(obj)}`)
 			}
 		} catch (e) {}
-		this.log('log', JSON.stringify(obj))
 		return obj
 	}
 
 	async getScreenList() {
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
+		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico/v1`
 		let obj = []
 		try {
 			const res = await getScreenPresets(this.config.baseURL, this.config.token, this)
 			if (res.code === 0) {
-				// 屏幕类型：【0：空屏幕；2:普通屏幕;4:AUX屏幕;8:MVR屏幕；16:回显屏幕；32：led屏幕】
-				// 目前只展示普通屏幕
+				// 屏幕状态enable【0：禁用；1：启用】
 				obj = (res.data.list ?? []).filter((item) => item.enable == 1)
 			}
 		} catch (e) {}
 		return obj
 	}
 
-	async getLayerList() {
-		this.log('info', `getLayerList2`)
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
-		// 由于图层需要拼接
-		let obj = []
-		try {
-			const res = await getLayerPresets(this.config.baseURL, this.config.token, this)
-			if (res.code === 0) {
-				// 源类型 【 0：空图层 1：无源； 2：输入类型；3：PGM；4：PVW； 5：BKG图片 6：LOGO图片  7：IPC类型8：截取源类型 9:   拼接源 10: ipc拼接屏11: 内置源12：内置图形源 13：图片OSD 14:文字OSD】
-				// 空图层不展示
-				obj = (res.data.list ?? []).filter((item) => item?.source?.general?.sourceType !== 0)
-			}
-		} catch (e) {}
-		return obj
-	}
-
 	async getSourceList() {
-		this.log('info', `getLayerList2`)
-		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico`
+		this.config.baseURL = `${this.config.protocol}://${this.config.host}:${this.config.port}/unico/v1`
 		// 由于图层需要拼接
 		let obj = []
 		try {
@@ -317,26 +216,51 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	async getAllData() {
-		Promise.all([this.getPresetList(), this.getScreenList(), this.getLayerList(), this.getSourceList()]).then((res) => {
+		Promise.all([this.getPresetList(), this.getScreenList(), this.getSourceList()]).then((res) => {
 			const presetList = res[0]
 			const screenList = res[1]
-			const screenFilterLiter = screenList.filter((item) => item.screenIdObj.type === 2 || item.screenIdObj.type === 4)
-			const layerList = res[2]
-			const sourceList = res[3]
+			// 屏幕类型：【0：空屏幕；2:普通屏幕;4:AUX屏幕;8:MVR屏幕；16:回显屏幕；32：led屏幕】
+			// 目前只展示普通屏幕、AUX屏幕
+			const screenFilterLiter = screenList
+				.filter((item) => item.screenIdObj.type === 2 || item.screenIdObj.type === 4)
+				.sort((a, b) => {
+					if (a.screenIdObj.type === b.screenIdObj.type) return 0
+					if (a.screenIdObj.type === 2) return -1 // 普通屏幕在前
+					if (a.screenIdObj.type === 4) return 1 // AUX屏幕在后
+					return 0
+				})
+			const sourceList = res[2]
+
+			// 新增变量
+			const { screenVariableDefinitions, screenDefaultVariableValues } = updateScreenVaraiable(screenFilterLiter)
+			const { presetVariableDefinitions, presetDefaultVariableValues } = updatePresetVaraiable(presetList)
+			const { sourceVariableDefinitions, sourceDefaultVariableValues } = updateSourceVaraiable(sourceList)
+			// 处理变量
+			this.setVariableDefinitions([
+				...defaultVariableDefinitions,
+				...screenVariableDefinitions,
+				...presetVariableDefinitions,
+				...sourceVariableDefinitions,
+			])
+			this.setVariableValues({
+				...screenDefaultVariableValues,
+				...presetDefaultVariableValues,
+				...sourceDefaultVariableValues,
+			})
 
 			this.presetDefinitionPreset = {}
 			this.presetDefinitionScreen = {}
 			this.presetDefinitionLayer = {}
 			this.presetDefinitionSource = {}
 
-			// 处理图层的数据
-			this.presetDefinitionPreset = getPresetFormatData(presetList)
+			this.presetDefinitionPreset = getPresetFormatData(presetList, this)
 			this.presetDefinitionScreen = getScreenFormatData(screenFilterLiter, this)
-			this.presetDefinitionLayer = getLayerFormatData(layerList, screenList, this)
+			// 根据屏幕生成图层
+			this.presetDefinitionLayer = getLayerFormatData(screenFilterLiter, this)
 			this.presetDefinitionSource = getSourceFormatData(sourceList, this)
 
 			this.setPresetDefinitions({
-				...getPresetDefinitions(this),
+				...getPresetDefinitions(this, screenFilterLiter),
 				...this.presetDefinitionPreset,
 				...this.presetDefinitionScreen,
 				...this.presetDefinitionLayer,
@@ -348,16 +272,16 @@ class ModuleInstance extends InstanceBase {
 		})
 	}
 
-	/** devices http handle end */
+	/** Switcher devices handle end */
 
-	/** devices cmd handle start */
+	/** F devices handle start */
 	//update device status
 	updateDeviceStatus(isAlive) {
 		this.log('debug', 'ping test:' + isAlive + ', lastState:' + this.lastState)
 		if (isAlive == true) {
 			this.log('debug', 'ping check ok.')
 			if (this.lastState !== 0) {
-				this.log('info', 'connection recover, try to reconnect device.')
+				this.log('debug', 'connection recover, try to reconnect device.')
 				this.updateStatus(InstanceStatus.Connecting)
 				//try to reconnect
 				this.initUDP()
@@ -367,7 +291,7 @@ class ModuleInstance extends InstanceBase {
 		} else {
 			if (isAlive == false && this.lastState === 0) {
 				this.updateStatus(InstanceStatus.ConnectionFailure)
-				this.log('info', 'ping check failure.')
+				this.log('debug', 'ping check failure.')
 				this.lastState = 1
 			}
 		}
@@ -389,13 +313,13 @@ class ModuleInstance extends InstanceBase {
 			this.socket = new TCPHelper(this.config.host, this.config.port)
 
 			this.socket.on('status_change', (status, message) => {
+				this.log('debug', `tcp-status-change, status: ${status}, msg: ${message}`)
 				this.updateStatus(status, message)
 			})
 
 			this.socket.on('error', async (err) => {
 				this.updateStatus(InstanceStatus.ConnectionFailure)
-				this.log('error', 'Network error: ' + err.message)
-				console.log('TCP Connection error, Try to reconnect.')
+				this.log('debug', 'TCP Network error: ' + err.message)
 				this.updateStatus(InstanceStatus.Connecting)
 				if (this.udp !== undefined) {
 					let cmd_connect = Buffer.from([
@@ -405,7 +329,7 @@ class ModuleInstance extends InstanceBase {
 					try {
 						await this.udp.send(cmd_connect)
 					} catch (e) {
-						this.log('debug', 'UDP send error: ' + e)
+						this.log('debug', `UDP send Error.${e}`)
 					}
 				} else {
 					this.initUDP()
@@ -418,7 +342,7 @@ class ModuleInstance extends InstanceBase {
 					0x57, 0x56,
 				])
 				this.socket.send(cmd)
-				this.log('debug', 'Connected')
+				this.log('debug', 'TCP Connected')
 				this.updateStatus(InstanceStatus.Ok)
 			})
 
@@ -443,8 +367,7 @@ class ModuleInstance extends InstanceBase {
 			this.udp = new UDPHelper(this.config.host, 3800)
 
 			this.udp.on('error', (err) => {
-				this.debug('Network error', err)
-				this.log('error', 'Network error: ' + err.message)
+				this.log('debug', 'UDP Network error: ' + err.message)
 				this.updateStatus(InstanceStatus.ConnectionFailure)
 			})
 
@@ -456,7 +379,6 @@ class ModuleInstance extends InstanceBase {
 			this.udp.on('status_change', (status, message) => {
 				this.log('debug', 'UDP status_change: ' + status)
 			})
-			this.log('debug', 'initUDP finish')
 		} else {
 			this.log('error', 'No host configured')
 			this.updateStatus(InstanceStatus.BadConfig)
@@ -470,12 +392,11 @@ class ModuleInstance extends InstanceBase {
 			try {
 				await this.udp.send(cmd_register)
 			} catch (e) {
-				this.log('debug', 'UDP send error: ' + e)
+				this.log('debug', `UDP send error.${e}`)
 			}
-			this.log('info', 'UDP registration.')
 		}
 	}
-	/** devices cmd handle end */
+	/** F devices handle end */
 
 	updateDefaultInfo() {
 		LATCH_ACTIONS.map((item) => {
@@ -484,42 +405,45 @@ class ModuleInstance extends InstanceBase {
 		this.updateActions()
 		this.updateFeedbacks()
 		this.setPresetDefinitions(getPresetDefinitions(this))
+		getVaraiableDefinitions(this)
 	}
 
 	async configUpdated(config) {
-		this.log('info', 'configUpdated modules...')
+		this.log('debug', 'configUpdated modules...')
 		this.updateStatus(InstanceStatus.Connecting)
 		let resetConnection = false
 		if (this.config.host !== config.host || this.config.modelId !== config.modelId) {
 			resetConnection = true
 		}
-
+		this.screenSelect = {}
+		this.layerSelect = -1
+		this.presetStatus = {}
+		this.specifiedScreenFtbStatus = {}
+		this.specifiedScreenFreezeStatus = {}
 		delete this.config.token
-		resetConnection && delete this.config.isOldVersion
+		delete this.config.sn
 		this.config = {
 			...this.config,
 			...config,
 			model: this.DEVICES_INFO[config.modelId],
 		}
 		this.updateDefaultInfo.bind(this)()
+		// 删除心跳
+		if (this.heartbeat) {
+			clearInterval(this.heartbeat)
+			delete this.heartbeat
+		}
+		if (this.presetBeat) {
+			clearInterval(this.presetBeat)
+			delete this.presetBeat
+		}
 
 		if (HTTP_DEVICES.includes(this.config.modelId)) {
-			this.log('info', 'http configUpdated handle...')
+			this.log('debug', 'http configUpdated handle...')
 			this.log('debug', `this.config:${JSON.stringify(this.config)}`)
 			if (this.socket !== undefined) {
 				this.socket.destroy()
 			}
-			if (this.heartbeat) {
-				clearInterval(this.heartbeat)
-				delete this.heartbeat
-			}
-			if (this.presetBeat) {
-				clearInterval(this.heartbeat)
-				delete this.heartbeat
-			}
-
-			this.screenSelect = {}
-			this.layerSelect = {}
 
 			await this.getDevicesByUCenter()
 
@@ -527,11 +451,6 @@ class ModuleInstance extends InstanceBase {
 		} else {
 			const isRefresh = resetConnection === true || this.socket === undefined
 			if (!isRefresh) return
-
-			if (this.heartbeat) {
-				clearInterval(this.heartbeat)
-				delete this.heartbeat
-			}
 
 			this.initUDP()
 			this.initTCP()
@@ -559,15 +478,7 @@ class ModuleInstance extends InstanceBase {
 			this.initTCP()
 			this.heartbeat = setInterval(() => this.pingTest(), 10000) //check every 10s
 		} else if (HTTP_DEVICES.includes(this.config.modelId)) {
-			await Promise.race([
-				new Promise((resolve) =>
-					setTimeout(() => {
-						this.log('info', 'promise-race-5...')
-						resolve()
-					}, 5000)
-				),
-				this.getDevicesByUCenter(),
-			])
+			await this.getDevicesByUCenter()
 		}
 
 		this.updateDefaultInfo.bind(this)()
