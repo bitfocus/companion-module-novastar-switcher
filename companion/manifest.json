@@ -3,7 +3,7 @@
 	"name": "novastar-switcher",
 	"shortname": "novastar-switcher",
 	"description": "Companion module for NovaStar Switcher Devices",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-novastar-switcher.git",
 	"bugs": "https://github.com/bitfocus/companion-module-novastar-switcher/issues",
@@ -19,8 +19,8 @@
 		"apiVersion": "0.0.0",
 		"entrypoint": "../src/main.js"
 	},
-	"legacyIds": ["novastar-unico", "novastar-d12"],
+	"legacyIds": ["novastar-unico"],
 	"manufacturer": "NovaStar",
-	"products": ["N10", "N20", "D12", "D32"],
+	"products": ["N10", "N20", "D32"],
 	"keywords": ["NovaStar"]
 }
