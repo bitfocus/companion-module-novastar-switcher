@@ -16,7 +16,7 @@ import { MODEL_ID_TO_KEY, ModelKey } from '../config/modelMap.js'
 import { MACHINE_CONFIGS, MachineConfig } from '../config/machineConfig.js'
 import { SourceBackup } from '../interfaces/SourceBackup.js'
 import { TestPatternPayload } from '../interfaces/TestPattern.js'
-import { filterValidPresets, filterValidScreens } from '../utils/listFilters.js'
+import { filterValidScreens } from '../utils/listFilters.js'
 
 type CreateOptions = {
 	model?: ModelKey
@@ -337,16 +337,7 @@ export class ApiClient {
 	}
 
 	async getPresets(): Promise<Response<PresetListDetailData>> {
-		const res = await this.http!.get<Response<PresetListDetailData>>(this.cfg.endpoints.preset.list)
-		const list = filterValidPresets(Array.isArray(res.data?.list) ? res.data.list : [])
-		return {
-			...res,
-			data: {
-				...res.data,
-				list,
-				totalCount: list.length,
-			},
-		}
+		return this.http!.get(this.cfg.endpoints.preset.list)
 	}
 
 	async getLayers(): Promise<Response<LayerListDetailData>> {
