@@ -1,44 +1,29 @@
-## NovaStar
+## 诺瓦星云-视频切换器 配套插件
 
-This module will allow you to control the following NovaStar products: N10, N20, D12 和 D32.
+该模块允许用户控制以下设备: N10, N20 和 D32；
 
-N10, N20, D12 和 D32 firmware versions must be v1.7.0 or higher.
+N10, N20 和 D32 设备固件版本应为 v1.7.0 及以上。
 
-Select the screen before executing Take, Cut, FTB, FRZ, or Match PGM.
+### 配置
 
-### Configuration
+- 在配置界面输入设备 IP，在发现列表中选择要控制的设备（序列号）
+- 若连接后提示配置错误，请重新进入配置并保存
 
-- Enter the IP address of the device in the configuration settings, and select the model of the device.
-- If an error is prompted after connecting: Please reconfigure the device connection information. You need to re-enter the configuration details, enter the account password and save again.
-
-**Available actions:**
+**支持的 Actions:**
 
 - Take
 - Cut
 - FTB
 - Freeze
 - Preset
-- Preset Destination
-  - N10\N20\D32: PVW - PGM - PGM+Take - PGM+Take+keyFrame
-  - D12: PVW - PGM
 - Screens
 - Layers
-- Sources
 - SwapCopy
 - MatchPgm
-- Take Time-
-- Take Time+
-- Mapping
-- Whether to execute Take when loading a preset to PGM
-- Whether to execute KeyFrame when loading a preset to PGM
 
-**Available Feedbacks:**
+**支持的 Feedbacks:**
 
 - FTB Status Detection
 - Freeze Status Detection
 - PGM Status Detection
-- Preset Status Detection
 - SwapCopy Status Detection
-- Mapping Status Detection
-- Take Status on Preset Loading Detection
-- KeyFrame Status on Preset Loading Detection
