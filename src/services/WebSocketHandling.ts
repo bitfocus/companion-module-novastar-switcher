@@ -149,7 +149,7 @@ export function updatePresets(self: ModuleInstance, presets: Preset[]): void {
 	presets.forEach((preset) => {
 		const newPreset = self.presets.find((oldPreset: Preset) => {
 			return oldPreset.guid === preset.guid
-		})!
+		})
 		if (!newPreset) return
 		realMerge(newPreset, preset)
 	})
@@ -158,7 +158,6 @@ export function updatePresets(self: ModuleInstance, presets: Preset[]): void {
 	self.updateVariableValues()
 	self.updatePresets()
 	self.updateFeedbacks()
-	self.updatePresets()
 }
 
 export function presetCreated(self: ModuleInstance, message: WebsocketCallbackData): void {

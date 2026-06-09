@@ -9,18 +9,18 @@
 	"bugs": "https://github.com/bitfocus/companion-module-novastar-switcher/issues",
 	"maintainers": [
 		{
-			"name": "NovaStar",
-			"email": ""
+			"name": "NovaStar-Service",
+			"email": "video-web@novastar.tech"
 		}
 	],
 	"runtime": {
-		"type": "node18",
+		"type": "node22",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
-		"entrypoint": "../src/main.js"
+		"entrypoint": "../dist/main.js"
 	},
 	"legacyIds": ["novastar-unico"],
 	"manufacturer": "NovaStar",
 	"products": ["N10", "N20", "D32"],
-	"keywords": ["NovaStar"]
+	"keywords": ["video", "switcher", "led"]
 }

@@ -170,8 +170,7 @@ export function updateCompanionActions(self: ModuleInstance): void {
 			callback: async () => {
 				try {
 					const screensToTake = self.screens.filter((screen) => screen.select === 1)
-					const result = await self.apiClient?.cut(screensToTake, 0, self.swapEnabled)
-					console.log(result)
+					await self.apiClient?.cut(screensToTake, 0, self.swapEnabled)
 				} catch {
 					self.log('error', 'cut send error')
 				}
@@ -630,8 +629,6 @@ export function updateCompanionActions(self: ModuleInstance): void {
 							enable: umd.enable === 1 ? 0 : 1,
 						}
 					})
-
-					console.log(umd)
 
 					await self.apiClient?.applyUMD(layer.layerId, umd)
 				} catch (error: any) {
