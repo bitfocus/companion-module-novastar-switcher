@@ -378,7 +378,7 @@ export function updateCompanionFeedbacks(self: ModuleInstance): void {
 
 					// Debug: 检查状态值
 					self.log(
-						'info',
+						'debug',
 						`interfaceO: ${interfaceO.state}, astableSignal: ${InputSourceState.astableSignal}, astableSignalCopy: ${InputSourceState.astableSignalCopy}`,
 					)
 					const bgcolor = getStateColor(interfaceO.state)
