@@ -3,7 +3,7 @@
 	"name": "novastar-switcher",
 	"shortname": "novastar-switcher",
 	"description": "Companion module for NovaStar Switcher Devices",
-	"version": "2.2.0",
+	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-novastar-switcher.git",
 	"bugs": "https://github.com/bitfocus/companion-module-novastar-switcher/issues",

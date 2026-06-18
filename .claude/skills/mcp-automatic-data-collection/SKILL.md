@@ -1,142 +1,142 @@
 ---
 name: mcp-automatic-data-collection
-description: 强制执行 MCP 自动数据采集规则，确保所有文件内容变更操作都被正确记录。当进行文件编辑、创建、删除等操作时，必须按照严格的配对规则调用 MCP 工具进行数据采集。
+description: Enforces MCP automatic data collection rules to ensure all file content changes are recorded correctly. When editing, creating, or deleting files, MCP tools must be called in strict paired before/after sequences.
 ---
 
-# MCP 自动数据采集规则
+# MCP Automatic Data Collection Rules
 
-## 何时使用此技能
+## When to Use This Skill
 
-在以下场景中必须使用此技能：
+Use this skill in the following scenarios:
 
-- 执行任何会修改文件内容的操作（如编辑、创建、删除文件）
-- 需要记录 AI 助手与用户的对话会话
-- 需要确保文件变更操作被完整追踪和记录
+- Performing any operation that modifies file content (edit, create, delete)
+- Recording AI assistant and user conversation sessions
+- Ensuring file change operations are fully tracked and recorded
 
-## 核心原则
+## Core Principles
 
-- **有文件内容变更** → 必须记录
-- **无文件内容变更** → 不需要记录
+- **File content changed** → must record
+- **No file content changed** → no recording needed
 
-## 触发条件
+## Trigger Conditions
 
-### 文件内容变更操作前
+### Before File Content Changes
 
-在执行以下操作**之前**，必须先调用 `beforeEditFile`：
+Before performing any of the following operations, call `beforeEditFile` first:
 
-- `write` - 写入文件
-- `search_replace` - 搜索替换内容
-- `MultiEdit` - 多文件编辑
-- `create_file` - 创建新文件
-- `delete_file` - 删除文件
-- 其他任何会修改文件内容的操作
+- `write` - write to a file
+- `search_replace` - search and replace content
+- `MultiEdit` - multi-file edit
+- `create_file` - create a new file
+- `delete_file` - delete a file
+- Any other operation that modifies file content
 
-### 文件内容变更操作后
+### After File Content Changes
 
-在文件变更操作**完成后**，必须调用 `afterEditFile`。
+After the file change operation completes, call `afterEditFile`.
 
-### 对话结束
+### End of Conversation
 
-每轮对话结束时，必须调用 `recordSession`。
+At the end of each conversation turn, call `recordSession`.
 
-## 操作分类
+## Operation Categories
 
-### 需要 MCP 记录的操作（文件内容变更）
+### Operations That Require MCP Recording (File Content Changes)
 
-- `create_file` - 创建新文件
-- `delete_file` - 删除文件
-- `search_replace` - 搜索替换内容
-- `edit_file` - 编辑文件内容
-- 其他任何会修改文件内容的操作
+- `create_file` - create a new file
+- `delete_file` - delete a file
+- `search_replace` - search and replace content
+- `edit_file` - edit file content
+- Any other operation that modifies file content
 
-### 不需要 MCP 记录的操作（只读操作）
+### Operations That Do Not Require MCP Recording (Read-Only)
 
-- `read_file` - 读取文件
-- `list_dir` - 列出目录
-- `grep` - 搜索文件内容
-- `codebase_search` - 代码库搜索
-- 其他只读操作
+- `read_file` - read a file
+- `list_dir` - list directory contents
+- `grep` - search file contents
+- `codebase_search` - codebase search
+- Other read-only operations
 
-## 执行流程
+## Execution Flow
 
-### 纯对话场景（无文件变更）
-
-```
-对话结束 → recordSession
-```
-
-### 文件内容变更场景
+### Conversation Only (No File Changes)
 
 ```
-beforeEditFile → [文件变更操作] → afterEditFile → recordSession
+End of conversation → recordSession
 ```
 
-### 只读分析场景（不触发 MCP）
+### File Content Change
 
 ```
-[读取分析操作] → 分析结果 → recordSession
+beforeEditFile → [file change operation] → afterEditFile → recordSession
 ```
 
-## 强制要求
+### Read-Only Analysis (No MCP Trigger)
 
-### 100% 覆盖
+```
+[read/analyze operations] → analysis result → recordSession
+```
 
-- 不允许任何遗漏或跳过
-- 所有文件内容变更操作都必须被记录
+## Mandatory Requirements
 
-### 严格配对
+### 100% Coverage
 
-- 每次 `beforeEditFile` 必须有且仅有一次对应的 `afterEditFile` 调用
-- 不允许遗漏、跳过或合并操作
-- 不允许将多次操作合并到一次 `afterEditFile` 调用中
+- No omissions or skips allowed
+- All file content change operations must be recorded
 
-### 会话一致性
+### Strict Pairing
 
-- 整个对话开始时应确定一个统一的 `sessionId`
-- 在所有后续对话轮次操作中保持该 ID 不变
-- 同一会话中的所有操作使用相同的 `sessionId`
+- Each `beforeEditFile` must have exactly one corresponding `afterEditFile` call
+- Omissions, skips, or merged operations are not allowed
+- Do not merge multiple operations into a single `afterEditFile` call
 
-### 路径规范
+### Session Consistency
 
-- 必须使用文件的绝对路径
-- 不允许使用相对路径
-- 必须列举所有涉及文件的绝对路径
+- Determine a single `sessionId` at the start of the conversation
+- Keep that ID unchanged across all subsequent turns
+- Use the same `sessionId` for all operations in a session
 
-## 违规处理
+### Path Convention
 
-### 即时检测
+- Use absolute file paths only
+- Relative paths are not allowed
+- List the absolute paths of all involved files
 
-- 每次文件操作后立即自检配对完整性
-- 检查是否所有 `beforeEditFile` 都有对应的 `afterEditFile`
-- 检查是否所有文件变更操作都被正确记录
+## Violation Handling
 
-### 强制纠正
+### Immediate Detection
 
-- 发现遗漏立即停止当前操作
-- 补充缺失的 MCP 工具调用
-- 确保操作流程完整后再继续
+- Self-check pairing completeness after each file operation
+- Verify every `beforeEditFile` has a matching `afterEditFile`
+- Verify all file change operations were recorded correctly
 
-### 重新执行
+### Mandatory Correction
 
-- 违规操作必须重新执行整个流程
-- 确保符合所有强制要求后再继续
+- Stop immediately when an omission is detected
+- Add the missing MCP tool calls
+- Ensure the workflow is complete before continuing
 
-## 常见违规案例
+### Re-execution
 
-### ❌ 错误示例 1：合并记录
+- Violating operations must be re-run through the full workflow
+- Continue only after all mandatory requirements are met
+
+## Common Violation Examples
+
+### ❌ Wrong Example 1: Merged Recording
 
 ```typescript
-// 错误：将多次操作合并到一次 afterEditFile
+// Wrong: merging multiple operations into one afterEditFile
 beforeEditFile(file1)
 editFile(file1)
-editFile(file2) // 错误：file2 没有 beforeEditFile
-afterEditFile(file1) // 错误：只记录了 file1
+editFile(file2) // Wrong: file2 has no beforeEditFile
+afterEditFile(file1) // Wrong: only file1 was recorded
 ```
 
-### ✅ 正确示例 1：分别记录
+### ✅ Correct Example 1: Separate Recording
 
 ```typescript
-// 正确：每个文件分别记录
+// Correct: record each file separately
 beforeEditFile(file1)
 editFile(file1)
 afterEditFile(file1)
@@ -146,95 +146,95 @@ editFile(file2)
 afterEditFile(file2)
 ```
 
-### ❌ 错误示例 2：遗漏配对
+### ❌ Wrong Example 2: Missing Pair
 
 ```typescript
-// 错误：beforeEditFile 后未调用 afterEditFile
+// Wrong: afterEditFile not called after beforeEditFile
 beforeEditFile(file1)
 editFile(file1)
-// 遗漏了 afterEditFile
+// afterEditFile was omitted
 ```
 
-### ✅ 正确示例 2：完整配对
+### ✅ Correct Example 2: Complete Pairing
 
 ```typescript
-// 正确：完整的配对流程
-beforeEditFile(file1)
-editFile(file1)
-afterEditFile(file1)
-```
-
-### ❌ 错误示例 3：跳过记录
-
-```typescript
-// 错误：直接进行文件变更操作而未调用 MCP 工具
-editFile(file1) // 错误：没有 beforeEditFile
-```
-
-### ✅ 正确示例 3：完整记录
-
-```typescript
-// 正确：完整的记录流程
+// Correct: complete pairing workflow
 beforeEditFile(file1)
 editFile(file1)
 afterEditFile(file1)
 ```
 
-### ❌ 错误示例 4：路径错误
+### ❌ Wrong Example 3: Skipped Recording
 
 ```typescript
-// 错误：使用相对路径
-beforeEditFile('./src/file.ts') // 错误：相对路径
+// Wrong: file change without calling MCP tools
+editFile(file1) // Wrong: no beforeEditFile
 ```
 
-### ✅ 正确示例 4：绝对路径
+### ✅ Correct Example 3: Complete Recording
 
 ```typescript
-// 正确：使用绝对路径
+// Correct: complete recording workflow
+beforeEditFile(file1)
+editFile(file1)
+afterEditFile(file1)
+```
+
+### ❌ Wrong Example 4: Wrong Path
+
+```typescript
+// Wrong: relative path
+beforeEditFile('./src/file.ts') // Wrong: relative path
+```
+
+### ✅ Correct Example 4: Absolute Path
+
+```typescript
+// Correct: absolute path
 beforeEditFile('/absolute/path/to/src/file.ts')
 ```
 
-### ❌ 错误示例 5：错误触发
+### ❌ Wrong Example 5: Incorrect Trigger
 
 ```typescript
-// 错误：对只读操作也调用 beforeEditFile/afterEditFile
-beforeEditFile(file1) // 错误：read_file 是只读操作
+// Wrong: calling beforeEditFile/afterEditFile for read-only operations
+beforeEditFile(file1) // Wrong: read_file is read-only
 readFile(file1)
-afterEditFile(file1) // 错误：read_file 不应该触发 MCP
+afterEditFile(file1) // Wrong: read_file should not trigger MCP
 ```
 
-### ✅ 正确示例 5：只读操作不触发
+### ✅ Correct Example 5: Read-Only Does Not Trigger
 
 ```typescript
-// 正确：只读操作不触发 MCP 工具
-readFile(file1) // 只读操作，不需要 MCP 调用
+// Correct: read-only operations do not trigger MCP tools
+readFile(file1) // Read-only; no MCP calls needed
 ```
 
-## 验证清单
+## Verification Checklist
 
-在执行文件变更操作时，请检查以下项目：
+When performing file change operations, verify:
 
-- [ ] 是否在文件变更操作前调用了 `beforeEditFile`？
-- [ ] 是否在文件变更操作后调用了 `afterEditFile`？
-- [ ] 每个 `beforeEditFile` 是否都有对应的 `afterEditFile`？
-- [ ] 是否使用了文件的绝对路径？
-- [ ] 是否在整个对话中保持 `sessionId` 一致？
-- [ ] 是否在对话结束时调用了 `recordSession`？
-- [ ] 是否对只读操作错误地调用了 MCP 工具？
-- [ ] 是否将多次操作合并到一次 `afterEditFile` 调用中？
+- [ ] Was `beforeEditFile` called before the file change?
+- [ ] Was `afterEditFile` called after the file change?
+- [ ] Does each `beforeEditFile` have a matching `afterEditFile`?
+- [ ] Were absolute file paths used?
+- [ ] Was `sessionId` kept consistent throughout the conversation?
+- [ ] Was `recordSession` called at the end of the conversation?
+- [ ] Were MCP tools incorrectly called for read-only operations?
+- [ ] Were multiple operations merged into a single `afterEditFile` call?
 
-## 最佳实践
+## Best Practices
 
-1. **提前规划**：在执行文件变更操作前，先规划好需要调用的 MCP 工具
-2. **即时记录**：每次文件变更后立即调用对应的 MCP 工具，不要延迟
-3. **严格配对**：确保每个 `beforeEditFile` 都有对应的 `afterEditFile`
-4. **路径检查**：始终使用绝对路径，避免路径错误
-5. **会话管理**：在对话开始时确定 `sessionId`，并在整个对话中保持一致
-6. **错误恢复**：如果发现遗漏，立即停止并补充缺失的调用
+1. **Plan ahead**: decide which MCP tools to call before file change operations
+2. **Record immediately**: call the corresponding MCP tools right after each file change; do not delay
+3. **Strict pairing**: ensure each `beforeEditFile` has a matching `afterEditFile`
+4. **Path check**: always use absolute paths to avoid path errors
+5. **Session management**: set `sessionId` at conversation start and keep it consistent
+6. **Error recovery**: if an omission is found, stop immediately and add the missing calls
 
-## 注意事项
+## Notes
 
-- 此规则是**强制执行**的，不允许任何例外
-- 违反规则可能导致数据采集不完整，影响后续分析
-- 如果对某个操作是否需要记录有疑问，优先选择记录
-- 只读操作（如 `read_file`）不需要调用 MCP 工具
+- These rules are **mandatory**; no exceptions
+- Violations may result in incomplete data collection and affect later analysis
+- When unsure whether an operation should be recorded, prefer recording
+- Read-only operations (e.g. `read_file`) do not require MCP tool calls

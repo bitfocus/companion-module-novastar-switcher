@@ -7,6 +7,7 @@ import { filterValidScreens, isValidPreset, isValidScreen } from '../utils/listF
 import { realMerge } from '../utils/utils.js'
 import { SourceBackup } from '../interfaces/SourceBackup.js'
 import { applyPresetScreenSelection } from '../utils/screenSelection.js'
+import { sourceBackupStateKey, sourceBackupStructureKey } from '../utils/backupDisplay.js'
 
 export const MessageTypes = {
 	layersSelected: 0x81105,
@@ -102,9 +103,25 @@ export function layersSelected(self: ModuleInstance, message: WebsocketCallbackD
 }
 
 export function screenPropertiesChanged(self: ModuleInstance, message: WebsocketCallbackData): void {
-	const screens: Screen[] = filterValidScreens(Array.isArray(message.data) ? message.data : [])
+	const screens = normalizeScreenPatchData(message.data)
+	if (screens.length === 0) return
+
 	updateScreens(self, screens)
 	self.updateVariableValues()
+}
+
+function normalizeScreenPatchData(data: unknown): Screen[] {
+	if (data == null) return []
+	if (Array.isArray(data)) return data as Screen[]
+	if (typeof data === 'object') {
+		if ('list' in data && Array.isArray((data as { list: unknown }).list)) {
+			return (data as { list: Screen[] }).list
+		}
+		if ('screenId' in data) {
+			return [data as Screen]
+		}
+	}
+	return []
 }
 
 export function updateScreens(self: ModuleInstance, screens: Screen[]): void {
@@ -129,10 +146,8 @@ export function screensSelected(self: ModuleInstance, message: WebsocketCallback
 		screen.select = screenSelection.select
 	})
 
-	self.updateActions()
-	self.updateFeedbacks()
-	self.updateVariableValues()
 	self.checkFeedbacks('screenState')
+	self.updateVariableValues()
 }
 
 export function presetsUpdated(self: ModuleInstance, message: WebsocketCallbackData): void {
@@ -146,18 +161,26 @@ export function presetNamesChanged(self: ModuleInstance, message: WebsocketCallb
 }
 
 export function updatePresets(self: ModuleInstance, presets: Preset[]): void {
+	let needsRebuild = false
+
 	presets.forEach((preset) => {
 		const newPreset = self.presets.find((oldPreset: Preset) => {
 			return oldPreset.guid === preset.guid
 		})
 		if (!newPreset) return
+		if (newPreset.name !== preset.name || newPreset.serial !== preset.serial) {
+			needsRebuild = true
+		}
 		realMerge(newPreset, preset)
 	})
 
 	self.checkFeedbacks('presetState')
 	self.updateVariableValues()
-	self.updatePresets()
-	self.updateFeedbacks()
+
+	if (needsRebuild) {
+		self.updatePresets()
+		self.updateFeedbacks()
+	}
 }
 
 export function presetCreated(self: ModuleInstance, message: WebsocketCallbackData): void {
@@ -208,12 +231,14 @@ export function presetDeleted(self: ModuleInstance, message: WebsocketCallbackDa
 }
 
 export function globalFtbChanged(self: ModuleInstance, message: WebsocketCallbackData): void {
-	self.globalFtb = message.data.ftb.enable
+	const data = message.data as { ftb?: { enable?: number }; enable?: number }
+	self.globalFtb = data.ftb?.enable ?? data.enable ?? self.globalFtb
 	self.checkFeedbacks('globalFtbState')
 }
 
 export function globalFreezeChanged(self: ModuleInstance, message: WebsocketCallbackData): void {
-	self.globalFreeze = message.data.freeze
+	const data = message.data as { freeze?: number }
+	self.globalFreeze = data.freeze ?? self.globalFreeze
 	self.checkFeedbacks('globalFreezeState')
 }
 
@@ -316,12 +341,23 @@ export function presetApplied(self: ModuleInstance, message: WebsocketCallbackDa
 }
 
 export function sourceBackupUpdated(self: ModuleInstance, message: WebsocketCallbackData): void {
+	const structureBefore = sourceBackupStructureKey(self.sourceBackups)
+	const stateBefore = sourceBackupStateKey(self.sourceBackups)
+
 	const sourceBackup: SourceBackup = message.data
 	realMerge(self.sourceBackups, sourceBackup)
-	self.updateActions()
-	self.updatePresets()
-	self.updateFeedbacks()
-	self.updateVariableDefinitions()
+
+	if (stateBefore === sourceBackupStateKey(self.sourceBackups)) {
+		return
+	}
+
+	if (structureBefore !== sourceBackupStructureKey(self.sourceBackups)) {
+		self.updateActions()
+		self.updatePresets()
+		self.updateFeedbacks()
+		self.updateVariableDefinitions()
+	}
+
 	self.updateVariableValues()
 	self.checkFeedbacks('sourceBackupState')
 }
@@ -337,7 +373,6 @@ export function createScreen(self: ModuleInstance, message: WebsocketCallbackDat
 	self.updateVariableValues()
 	self.updateActions()
 	self.updateFeedbacks()
-	self.updateVariableValues()
 	self.checkFeedbacks('screenState')
 	self.updatePresets()
 }
@@ -360,7 +395,6 @@ export function screenDeleted(self: ModuleInstance, message: WebsocketCallbackDa
 	self.updateVariableValues()
 	self.updateActions()
 	self.updateFeedbacks()
-	self.updateVariableValues()
 	self.checkFeedbacks('screenState')
 	self.updatePresets()
 }
@@ -393,8 +427,7 @@ export function interfaceUpdated(self: ModuleInstance, _message: WebsocketCallba
 		.then(([interfacesResponse, cropSourcesResponse]) => {
 			self.interfaces = interfacesResponse.data.list
 			self.cropSources = cropSourcesResponse.data.list
-			self.updateActions()
-			self.updateFeedbacks()
+			self.checkFeedbacks('sourceSignalState')
 			self.updateVariableValues()
 		})
 		.catch((err) => {
