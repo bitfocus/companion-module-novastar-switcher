@@ -1,15 +1,15 @@
-## 诺瓦星云-视频切换器 配套插件
+## Novastar Video Switcher Companion Module
 
-该模块允许用户控制以下设备: N10, N20 和 D32；
+This module lets you control the following devices: N10, N20, and D32.
 
-N10, N20 和 D32 设备固件版本应为 v1.7.0 及以上。
+N10, N20, and D32 devices should run firmware v1.7.0 or later.
 
-### 配置
+### Configuration
 
-- 在配置界面输入设备 IP，在发现列表中选择要控制的设备（序列号）
-- 若连接后提示配置错误，请重新进入配置并保存
+- Enter the device IP in the configuration page, then select the device to control from the discovery list (serial number)
+- If you see a configuration error after connecting, reopen the configuration page and save again
 
-**支持的 Actions:**
+**Supported Actions:**
 
 - Take
 - Cut
@@ -21,7 +21,7 @@ N10, N20 和 D32 设备固件版本应为 v1.7.0 及以上。
 - SwapCopy
 - MatchPgm
 
-**支持的 Feedbacks:**
+**Supported Feedbacks:**
 
 - FTB Status Detection
 - Freeze Status Detection
