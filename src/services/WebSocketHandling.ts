@@ -6,7 +6,6 @@ import { WebsocketCallbackData } from '../interfaces/WebsocketCallbackData.js'
 import { filterValidScreens, isValidPreset, isValidScreen } from '../utils/listFilters.js'
 import { realMerge } from '../utils/utils.js'
 import { SourceBackup } from '../interfaces/SourceBackup.js'
-import { applyPresetScreenSelection } from '../utils/screenSelection.js'
 import { sourceBackupStateKey, sourceBackupStructureKey } from '../utils/backupDisplay.js'
 
 export const MessageTypes = {
@@ -114,7 +113,7 @@ function normalizeScreenPatchData(data: unknown): Screen[] {
 	if (data == null) return []
 	if (Array.isArray(data)) return data as Screen[]
 	if (typeof data === 'object') {
-		if ('list' in data && Array.isArray((data as { list: unknown }).list)) {
+		if ('list' in data && Array.isArray(data.list)) {
 			return (data as { list: Screen[] }).list
 		}
 		if ('screenId' in data) {
@@ -309,12 +308,8 @@ export function layerGeneralUpdated(self: ModuleInstance, message: WebsocketCall
 
 export function presetApplied(self: ModuleInstance, message: WebsocketCallbackData): void {
 	const data: PresetListDetailData = message.data
-	const didTake = data?.list?.filter((item) => item.currentRegion === 2 && item.sourceRegion === 4).length > 0
 
 	data?.list?.forEach((preset) => {
-		if (preset.currentRegion > 2 && !didTake) {
-			applyPresetScreenSelection(self, preset)
-		}
 		self.presets = self.presets.map((singlePreset): Preset => {
 			if (singlePreset.currentRegion === preset.currentRegion || preset.currentRegion === 6) {
 				return {
