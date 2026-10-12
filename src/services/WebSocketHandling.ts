@@ -113,7 +113,7 @@ function normalizeScreenPatchData(data: unknown): Screen[] {
 	if (data == null) return []
 	if (Array.isArray(data)) return data as Screen[]
 	if (typeof data === 'object') {
-		if ('list' in data && Array.isArray(data.list)) {
+		if ('list' in data && Array.isArray((data as { list: unknown }).list)) {
 			return (data as { list: Screen[] }).list
 		}
 		if ('screenId' in data) {

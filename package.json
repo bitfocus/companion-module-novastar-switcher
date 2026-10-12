@@ -1,6 +1,6 @@
 {
 	"name": "companion-module-novastar-switcher",
-	"version": "3.0.3",
+	"version": "3.0.4",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {
@@ -26,10 +26,10 @@
 		"@companion-module/base": "^1.12.1",
 		"got": "^14.4.7",
 		"jsonwebtoken": "^9.0.2",
-		"ws": "^8.21.0"
+		"ws": "^8.18.3"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.8.0",
+		"@companion-module/tools": "^2.6.1",
 		"@types/jsonwebtoken": "^9",
 		"@types/node": "^22.14.1",
 		"@types/ws": "^8",
@@ -50,5 +50,5 @@
 			"yarn lint:raw --fix"
 		]
 	},
-	"packageManager": "yarn@4.13.0"
+	"packageManager": "yarn@4.9.2"
 }

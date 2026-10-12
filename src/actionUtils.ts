@@ -30,10 +30,12 @@ export function getLayerSelectionOptions(
 
 	const screenChoices = self.screens
 		.filter((screen) => allowedScreenTypes.includes(screen.screenIdObj.type))
-		.map((screen): DropdownChoice => ({
-			id: screen.screenId,
-			label: screen.general.name,
-		}))
+		.map(
+			(screen): DropdownChoice => ({
+				id: screen.screenId,
+				label: screen.general.name,
+			}),
+		)
 
 	return [
 		...fields,
@@ -185,10 +187,12 @@ export function getInputSourceChoices(self: ModuleInstance, onUpdate: () => void
 			}
 		})
 
-	const cropChoices = self.cropSources.map((cropSource): DropdownChoice => ({
-		id: `crop_${cropSource.cropId}`,
-		label: `${cropSource.name} (Crop)`,
-	}))
+	const cropChoices = self.cropSources.map(
+		(cropSource): DropdownChoice => ({
+			id: `crop_${cropSource.cropId}`,
+			label: `${cropSource.name} (Crop)`,
+		}),
+	)
 
 	return [...interfaceChoices, ...cropChoices]
 }

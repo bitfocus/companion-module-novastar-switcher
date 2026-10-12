@@ -816,10 +816,12 @@ export function updateCompanionActions(self: ModuleInstance): void {
 						.filter((screen) => {
 							return [SCREEN_TYPE.SCREEN, SCREEN_TYPE.AUX].includes(screen.screenIdObj.type)
 						})
-						.map((screen): DropdownChoice => ({
-							id: screen.screenId,
-							label: screen.general.name,
-						})),
+						.map(
+							(screen): DropdownChoice => ({
+								id: screen.screenId,
+								label: screen.general.name,
+							}),
+						),
 				},
 				{
 					type: 'dropdown',
