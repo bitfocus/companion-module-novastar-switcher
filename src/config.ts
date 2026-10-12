@@ -40,7 +40,7 @@ export class Config {
 			{
 				type: 'textinput',
 				id: 'host',
-				label: 'Machine address or PixelFlow address',
+				label: 'Ip Address',
 				width: 6,
 				regex: Regex.IP,
 				required: true,
